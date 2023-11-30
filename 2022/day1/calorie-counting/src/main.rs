@@ -14,9 +14,14 @@ fn main() -> Result<(), std::io::Error> {
                 .collect::<Vec<i32>>()
         })
         .map(|v| v.iter().sum::<i32>())
-        .max();
+        .collect::<Vec<i32>>()
+        .into_iter()
+        .sorted_by(|a, b| b.cmp(a));
 
-    println!("{}", m.unwrap());
+    let mut vs = m.take(3);
+    let best = vs.next().unwrap();
+    println!("The best is {}", best);
+    println!("The sum of top 3 is {}", best + vs.sum::<i32>());
 
     Ok(())
 }
