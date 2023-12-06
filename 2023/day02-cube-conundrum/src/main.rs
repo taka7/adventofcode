@@ -62,6 +62,10 @@ fn main() -> Result<(), std::io::Error> {
     let ids = lines
         .map(|v| v.unwrap())
         .map(|line| parse(&line))
+        .collect::<Vec<Game>>();
+
+    let part1_sum = ids
+        .iter()
         .filter_map(|game| {
             if game.grab.iter().all(|gr| {
                 gr.red.unwrap_or_default() <= 12
@@ -72,8 +76,24 @@ fn main() -> Result<(), std::io::Error> {
             } else {
                 None
             }
-        });
+        })
+        .sum::<u32>();
 
-    println!("{:?}", ids.sum::<u32>());
+    let part2_sum = ids
+        .iter()
+        .map(|game| {
+            game.grab.iter().fold((0, 0, 0), |(ar, ag, ab), cs| {
+                (
+                    std::cmp::max(ar, cs.red.unwrap_or_default()),
+                    std::cmp::max(ag, cs.green.unwrap_or_default()),
+                    std::cmp::max(ab, cs.blue.unwrap_or_default()),
+                )
+            })
+        })
+        .map(|(r, g, b)| r * g * b)
+        .sum::<u32>();
+
+    println!("{:?}", part1_sum);
+    println!("{:?}", part2_sum);
     Ok(())
 }
