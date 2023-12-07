@@ -42,24 +42,22 @@ fn main() -> Result<(), std::io::Error> {
             }
             vs
         })
-        .enumerate()
-        .fold(
-            Vec::<(usize, usize, usize, u32)>::new(),
-            |mut acc, (row, vs)| {
-                vs.into_iter().for_each(|v| acc.push((row, v.0, v.1, v.2)));
-                acc
-            },
-        );
+        .collect::<Vec<_>>();
 
     let iter = nums
-        .into_iter()
-        .map(|(row, column, width, number)| Rec {
-            row: row - 1,
-            column: column - 1,
-            width: width + 2,
-            number: number,
+        .iter()
+        .enumerate()
+        .fold(Vec::new(), |mut acc, (row, vs)| {
+            vs.into_iter().for_each(|v| {
+                acc.push(Rec {
+                    row: row - 1,
+                    column: v.0 - 1,
+                    width: v.1 + 2,
+                    number: v.2,
+                })
+            });
+            acc
         })
-        .collect::<Vec<Rec>>()
         .into_iter()
         .filter_map(|r| {
             if table[r.row]
