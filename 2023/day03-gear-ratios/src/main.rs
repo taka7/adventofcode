@@ -91,5 +91,59 @@ fn main() -> Result<(), std::io::Error> {
         });
 
     println!("{:?}", iter.sum::<u32>());
+
+    let gears = table
+        .iter()
+        .enumerate()
+        .map(|(row, line)| {
+            let mut vs = Vec::new();
+            let mut i = 0;
+            while i < line.len() {
+                if let Some(c) = line.get(i..).unwrap().find('*') {
+                    vs.push((row, i + c));
+                    i = i + c + 1;
+                } else {
+                    break;
+                }
+            }
+            vs
+        })
+        .fold(Vec::new(), |mut acc, v| {
+            acc.extend(v);
+            acc
+        });
+
+    let n = gears
+        .iter()
+        .map(|g| {
+            (g.0 - 1..=g.0 + 1)
+                .map(|r| {
+                    nums[r]
+                        .iter()
+                        .filter_map(|num| {
+                            if num.0 <= g.1 + 1 && num.0 + num.1 > g.1 - 1 {
+                                Some(num.2)
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .fold(Vec::new(), |mut acc, vs| {
+                    vs.into_iter().for_each(|v| acc.push(v));
+                    acc
+                })
+        })
+        .filter_map(|v| {
+            if v.len() == 2 {
+                Some(v[0] * v[1])
+            } else {
+                None
+            }
+        })
+        .sum::<u32>();
+
+    println!("{:?}", n);
+
     Ok(())
 }
