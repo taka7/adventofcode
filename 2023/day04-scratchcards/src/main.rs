@@ -1,6 +1,5 @@
 #[derive(Debug)]
 struct Card {
-    id: u32,
     win: Vec<u32>,
     number: Vec<u32>,
 }
@@ -8,7 +7,7 @@ struct Card {
 fn parse(line: &str) -> Card {
     let p = line.find(':').unwrap();
     let card = line.get(4..p).unwrap();
-    let id = card.trim().parse::<u32>().unwrap();
+    let _ = card.trim().parse::<u32>().unwrap();
 
     let mut gs = line
         .get(p + 1..)
@@ -28,7 +27,6 @@ fn parse(line: &str) -> Card {
         })
         .collect::<Vec<_>>();
     Card {
-        id: id,
         win: gs.remove(0),
         number: gs.remove(0),
     }
@@ -37,7 +35,7 @@ fn parse(line: &str) -> Card {
 fn main() -> Result<(), std::io::Error> {
     let lines = std::io::stdin().lines();
 
-    let s = lines
+    let matches = lines
         .map(|v| v.unwrap())
         .map(|line| parse(&line))
         .map(|card| {
@@ -46,10 +44,12 @@ fn main() -> Result<(), std::io::Error> {
                 .filter(|n| card.win.iter().any(|w| w == *n))
                 .count()
         })
-        .collect::<Vec<usize>>()
-        .into_iter()
+        .collect::<Vec<usize>>();
+
+    let s = matches
+        .iter()
         .filter_map(|n| {
-            if n >= 1 {
+            if *n >= 1 {
                 Some(2u32.pow((n - 1) as u32))
             } else {
                 None
@@ -57,6 +57,7 @@ fn main() -> Result<(), std::io::Error> {
         })
         .sum::<u32>();
 
-    println!("{:?}", s);
+    println!("part1: {:?}", s);
+
     Ok(())
 }
