@@ -59,5 +59,16 @@ fn main() -> Result<(), std::io::Error> {
 
     println!("part1: {:?}", s);
 
+    let mut counts = Vec::new();
+    counts.resize(matches.len(), 1);
+    matches.iter().enumerate().for_each(|(i, n)| {
+        (i + 1..i + 1 + n).for_each(|v| {
+            counts[v] += counts[i];
+        })
+    });
+    let s2 = counts.into_iter().sum::<usize>();
+
+    println!("part2: {s2}");
+
     Ok(())
 }
