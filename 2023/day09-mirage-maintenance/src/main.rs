@@ -29,5 +29,12 @@ fn main() {
         })
         .collect::<Vec<Vec<i64>>>();
 
-    println!("{}", nums.iter().map(|v| solve(v)).sum::<i64>());
+    println!("part1: {}", nums.iter().map(|v| solve(v)).sum::<i64>());
+
+    let nums_rev = nums
+        .into_iter()
+        .map(|vs| vs.into_iter().rev().collect::<Vec<i64>>())
+        .collect::<Vec<Vec<i64>>>();
+
+    println!("part2: {}", nums_rev.iter().map(|v| solve(v)).sum::<i64>());
 }
