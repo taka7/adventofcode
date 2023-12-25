@@ -93,6 +93,7 @@ fn push_candidate(
 
     let c = get_val(maze, pos);
 
+    println!("c: {}", c);
     let offsets = offset_map.get(&c).unwrap();
 
     offsets.iter().for_each(|off| {
@@ -151,6 +152,71 @@ fn part1(maze: &Vec<Vec<char>>, offset_map: &HashMap<char, Vec<(i32, i32)>>) {
     println!("part1: {}", count - 1);
 }
 
+fn print_tile(tile: &Vec<Vec<Option<bool>>>) {
+    println!("Dump tile");
+    for y in tile {
+        for x in y {
+            let c = match x {
+                Some(true) => 'T',
+                Some(false) => 'F',
+                None => ' ',
+            };
+            print!("{c}");
+        }
+        println!("");
+    }
+    println!("");
+}
+
+fn part2(maze: &Vec<Vec<char>>, offset_map: &HashMap<char, Vec<(i32, i32)>>) {
+    let mut tile = make_map(&maze, None);
+
+    println!("{:?}", maze.len() - 1);
+    println!("{:?}", (1..maze.len() - 1).collect::<Vec<usize>>());
+
+    let mut current = (1..(maze.len() - 1))
+        .flat_map(|r| (1..(maze[0].len() - 1)).map(move |c| Pos { x: c, y: r }))
+        .collect::<HashSet<Pos>>();
+
+    while current.len() != 0 {
+        let start_pos = current.iter().next().unwrap().clone();
+
+        println!("start_pos: {:?}", start_pos);
+
+        let mut visited = HashSet::new();
+        let mut cur_loop = HashSet::new();
+        visited.insert(start_pos);
+        cur_loop.insert(start_pos);
+
+        let mut looped = false;
+        while cur_loop.len() != 0 {
+            println!("cur_loop: {:?}", cur_loop);
+
+            cur_loop = cur_loop
+                .iter()
+                .flat_map(|c| push_candidate(&maze, &c, offset_map, &mut visited))
+                .collect::<HashSet<_>>();
+
+            println!("next_loop: {:?}", cur_loop);
+            if cur_loop.len() == 1 && *cur_loop.iter().next().unwrap() == start_pos {
+                looped = true;
+            }
+        }
+        if looped {
+            cur_loop.iter().for_each(|p| tile[p.y][p.x] = Some(true));
+        }
+
+        visited.iter().for_each(|v| {
+            if looped {
+                tile[v.y][v.x] = Some(true);
+            }
+            current.remove(v);
+        });
+
+        print_tile(&tile);
+    }
+}
+
 fn main() {
     let mut offset_map = HashMap::new();
     offset_map.insert('S', vec![(0, -1), (-1, 0), (1, 0), (0, 1)]);
@@ -163,5 +229,6 @@ fn main() {
 
     let maze = get_maze();
 
-    part1(&maze, &offset_map);
+    //    part1(&maze, &offset_map);
+    part2(&maze, &offset_map);
 }
