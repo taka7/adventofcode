@@ -83,6 +83,18 @@ fn get_val(maze: &Vec<Vec<char>>, pos: &Pos) -> char {
     maze[pos.y][pos.x]
 }
 
+fn valid_next(
+    maze: &Vec<Vec<char>>,
+    offset_map: &HashMap<char, Vec<(i32, i32)>>,
+    cur: &Pos,
+    next: &Pos,
+) -> bool {
+    offset_map
+        .get(&get_val(maze, &next))
+        .map(|vs| vs.iter().any(|off| Pos::next(&next, off.0, off.1) == *cur))
+        == Some(true)
+}
+
 fn push_candidate(
     maze: &Vec<Vec<char>>,
     pos: &Pos,
@@ -102,12 +114,7 @@ fn push_candidate(
             return;
         }
 
-        let c = get_val(maze, &n);
-        if offset_map
-            .get(&c)
-            .map(|vs| vs.iter().any(|off| Pos::next(&n, off.0, off.1) == *pos))
-            == Some(true)
-        {
+        if valid_next(&maze, offset_map, pos, &n) {
             next.push(n);
             visited.insert(n);
         }
@@ -152,14 +159,13 @@ fn part1(maze: &Vec<Vec<char>>, offset_map: &HashMap<char, Vec<(i32, i32)>>) {
     println!("part1: {}", count - 1);
 }
 
-fn print_tile(tile: &Vec<Vec<Option<bool>>>) {
-    println!("Dump tile");
-    for y in tile {
+fn print_wall(wall: &Vec<Vec<bool>>) {
+    println!("Wall");
+    for y in wall {
         for x in y {
             let c = match x {
-                Some(true) => 'T',
-                Some(false) => 'F',
-                None => ' ',
+                true => 'T',
+                false => ' ',
             };
             print!("{c}");
         }
@@ -168,53 +174,83 @@ fn print_tile(tile: &Vec<Vec<Option<bool>>>) {
     println!("");
 }
 
-fn part2(maze: &Vec<Vec<char>>, offset_map: &HashMap<char, Vec<(i32, i32)>>) {
-    let mut tile = make_map(&maze, None);
+fn print_maze(maze: &Vec<Vec<char>>) {
+    for y in maze {
+        for x in y {
+            print!("{x}");
+        }
+        println!("");
+    }
+    println!("");
+}
 
-    println!("{:?}", maze.len() - 1);
-    println!("{:?}", (1..maze.len() - 1).collect::<Vec<usize>>());
+fn print_maze_with_wall(maze: &Vec<Vec<char>>, wall: &Vec<Vec<bool>>) {
+    for (y, ys) in maze.iter().enumerate() {
+        for (x, v) in ys.iter().enumerate() {
+            let c = if wall[y][x] == true { *v } else { ' ' };
+            print!("{c}");
+        }
+        println!("");
+    }
+    println!("");
+}
+
+fn part2(maze: &Vec<Vec<char>>, offset_map: &HashMap<char, Vec<(i32, i32)>>) {
+    let mut maze = maze.clone();
+    //    let s = find_start(&maze);
+    //    maze[s.y][s.x] = 'L';
+
+    let mut wall = make_map(&maze, false);
 
     let mut current = (1..(maze.len() - 1))
         .flat_map(|r| (1..(maze[0].len() - 1)).map(move |c| Pos { x: c, y: r }))
         .collect::<HashSet<Pos>>();
 
+    print_maze(&maze);
+
     while current.len() != 0 {
-        let start_pos = current.iter().next().unwrap().clone();
-
-        println!("start_pos: {:?}", start_pos);
-
         let mut visited = HashSet::new();
-        let mut cur_loop = HashSet::new();
-        visited.insert(start_pos);
-        cur_loop.insert(start_pos);
 
-        let mut looped = false;
-        while cur_loop.len() != 0 {
-            println!("cur_loop: {:?}", cur_loop);
+        let mut loop_closed = false;
+        let mut pos = current.iter().next().unwrap().clone();
+        while !visited.contains(&pos) {
+            visited.insert(pos);
 
-            cur_loop = cur_loop
-                .iter()
-                .flat_map(|c| push_candidate(&maze, &c, offset_map, &mut visited))
-                .collect::<HashSet<_>>();
+            let mut next = None;
+            if let Some(vs) = offset_map.get(&get_val(&maze, &pos)) {
+                let next1 = Pos::next(&pos, vs[0].0, vs[0].1);
+                let next2 = Pos::next(&pos, vs[1].0, vs[1].1);
+                let visited1 = visited.contains(&next1);
+                let visited2 = visited.contains(&next2);
+                if !visited1 {
+                    next = Some(next1);
+                } else if !visited2 {
+                    next = Some(next2);
+                } else {
+                    loop_closed = valid_next(&maze, &offset_map, &pos, &next1)
+                        && valid_next(&maze, &offset_map, &pos, &next2);
+                }
+            }
 
-            println!("next_loop: {:?}", cur_loop);
-            if cur_loop.len() == 1 && *cur_loop.iter().next().unwrap() == start_pos {
-                looped = true;
+            if let Some(n) = next {
+                if valid_next(&maze, &offset_map, &pos, &n) {
+                    pos = n;
+                } else {
+                    break;
+                }
+            } else {
+                break;
             }
         }
-        if looped {
-            cur_loop.iter().for_each(|p| tile[p.y][p.x] = Some(true));
-        }
 
-        visited.iter().for_each(|v| {
-            if looped {
-                tile[v.y][v.x] = Some(true);
-            }
-            current.remove(v);
+        visited.iter().for_each(|pos| {
+            wall[pos.y][pos.x] = loop_closed;
+            current.remove(pos);
         });
-
-        print_tile(&tile);
     }
+
+    print_wall(&wall);
+    print_maze_with_wall(&maze, &wall);
 }
 
 fn main() {
