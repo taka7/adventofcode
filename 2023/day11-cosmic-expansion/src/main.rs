@@ -1,5 +1,4 @@
 use itertools::Itertools;
-use std::ops::Range;
 
 fn get_cosmic() -> Vec<Vec<char>> {
     std::io::stdin()
@@ -63,46 +62,45 @@ struct Pos<Idx> {
     y: Idx,
 }
 
-fn calc_length(g1: Pos<usize>, g2: Pos<usize>, rows: &Vec<usize>, columns: &Vec<usize>) -> usize {
+fn calc_length(
+    g1: Pos<usize>,
+    g2: Pos<usize>,
+    rows: &Vec<usize>,
+    columns: &Vec<usize>,
+    distance_ratio: usize,
+) -> usize {
     let (min_row, max_row) = if g1.x < g2.x {
         (g1.x, g2.x)
     } else {
         (g2.x, g1.x)
     };
-    let row = Range {
-        start: min_row,
-        end: max_row,
-    };
-    let dist_row = row.end - row.start
-        + rows
-            .iter()
-            .filter(|r| row.start < **r && **r < row.end)
-            .count();
+    let skips = rows
+        .iter()
+        .filter(|r| min_row < **r && **r < max_row)
+        .count();
+
+    let dist_row = max_row - min_row - skips + skips * distance_ratio;
 
     let (min_column, max_column) = if g1.y < g2.y {
         (g1.y, g2.y)
     } else {
         (g2.y, g1.y)
     };
-    let column = Range {
-        start: min_column,
-        end: max_column,
-    };
-    let dist_column = column.end - column.start
-        + columns
-            .iter()
-            .filter(|c| column.start < **c && **c < column.end)
-            .count();
+    let skips = columns
+        .iter()
+        .filter(|c| min_column < **c && **c < max_column)
+        .count();
+    let dist_column = max_column - min_column - skips + skips * distance_ratio;
 
     dist_row + dist_column
 }
 
-fn part1(cosmic: &Vec<Vec<char>>) {
+fn calc_total_distance(cosmic: &Vec<Vec<char>>, distance_ratio: usize) -> usize {
     let (exp_columns, exp_rows) = get_expansion(cosmic);
     let galaxies = get_galaxies(cosmic);
 
     let pairs = galaxies.iter().combinations(2);
-    let total_len = pairs
+    pairs
         .map(|p| {
             calc_length(
                 Pos {
@@ -115,13 +113,37 @@ fn part1(cosmic: &Vec<Vec<char>>) {
                 },
                 &exp_columns,
                 &exp_rows,
+                distance_ratio,
             )
         })
-        .sum::<usize>();
+        .sum::<usize>()
+}
+
+fn part1(cosmic: &Vec<Vec<char>>) {
+    let total_len = calc_total_distance(cosmic, 2);
     println!("part1: {total_len}");
+}
+
+fn part2(cosmic: &Vec<Vec<char>>) {
+    let total_len = calc_total_distance(cosmic, 1_000_000);
+    println!("part2: {total_len}");
+}
+
+fn part2_10(cosmic: &Vec<Vec<char>>) {
+    let total_len = calc_total_distance(cosmic, 10);
+    println!("part2_10: {total_len}");
+}
+
+fn part2_100(cosmic: &Vec<Vec<char>>) {
+    let total_len = calc_total_distance(cosmic, 100);
+    println!("part2_100: {total_len}");
 }
 
 fn main() {
     let cosmic = get_cosmic();
     part1(&cosmic);
+    part2(&cosmic);
+
+    part2_10(&cosmic);
+    part2_100(&cosmic);
 }
