@@ -244,16 +244,16 @@ fn generate_wall(maze: &Vec<Vec<char>>, start: Pos) -> Vec<Vec<bool>> {
             let cur_pos = next.unwrap();
             visited.insert(cur_pos);
 
-            next = get_wall_next(maze, &cur_pos, Some(prev)).map(|n| {
+            next = get_wall_next(maze, &cur_pos, Some(prev));
+            if next.is_some() {
                 prev = cur_pos;
-                n
-            });
+            }
         }
 
         visited.iter().for_each(|pos| {
             wall[pos.y][pos.x] = next == Some(start);
-            current.remove(pos);
         });
+        current = &current - &visited;
     }
 
     wall
